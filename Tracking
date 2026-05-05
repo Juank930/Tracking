@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Tracking de Contactos</title>
+
+<!-- Librería para copiar como imagen -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<style>
+:root {
+    --bg: #f0f0f0;
+    --text: #000;
+    --card: #ffffff;
+    --header: #ee2323;
+}
+
+body.dark {
+    --bg: #1e1e1e;
+    --text: #e0e0e0;
+    --card: #2b2b2b;
+    --header: #ee2323;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+header {
+    padding: 15px 20px;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+button {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.container {
+    display: flex;
+    gap: 2%;
+    padding: 20px;
+}
+
+.table-container { width: 80%; }
+.form-container { width: 20%; }
+
+form, table {
+    background: var(--card);
+    border-radius: 8px;
+}
+
+form { padding: 15px; }
+
+label {
+    display: block;
+    margin-top: 10px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    vertical-align: top;
+}
+
+th {
+    background: var(--header);
+    color: rgb(255, 255, 255);
+}
+
+
+.titulo {
+    text-align: center;
+    color: #ee2323;
+    font-size: 32px;
+    margin-bottom: 15px;
+    text-shadow:
+        1px 1px 0 #b71c1c,
+        2px 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    vertical-align: top;
+    resize: horizontal;
+    overflow: auto;
+    min-width: 80px;
+}
+
+table {
+    table-layout: fixed;
+}
+
+
+.form-container form {
+    background: #bebebe; /* Cambia este color */
+}
+
+/* ================================
+   PERSONALIZACIÓN SOLO FORMULARIO
+   ================================ */
+
+:root {
+    /* Contenedor del formulario */
+    --form-bg: #f0f0f0;
+    --form-text: #222222;
+    --form-font: "Segoe UI", Arial, sans-serif;
+
+    /* Campos de entrada */
+    --form-input-bg: #ffffff;
+    --form-input-text: #000000;
+    --form-input-border: #bbbbbb;
+    --form-input-focus: #ee2323;
+}
+
+/* Contenedor del formulario (efecto 3D) */
+.form-container form {
+    background: var(--form-bg);
+    color: var(--form-text);
+    font-family: var(--form-font);
+
+    /* EFECTO 3D */
+    box-shadow:
+        0 6px 10px rgba(0, 0, 0, 0.15),
+        0 2px 4px rgba(0, 0, 0, 0.10);
+
+    border-radius: 10px;
+    transition: box-shadow 0.3s ease;
+}
+
+/* Efecto al pasar el mouse (opcional pero recomendado) */
+.form-container form:hover {
+    box-shadow:
+        0 10px 18px rgba(0, 0, 0, 0.25),
+        0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Inputs, selects y textarea SOLO del formulario */
+.form-container input,
+.form-container select,
+.form-container textarea {
+    background: var(--form-input-bg);
+    color: var(--form-input-text);
+    border: 1px solid var(--form-input-border);
+    font-family: var(--form-font);
+    border-radius: 6px;
+    padding: 6px;
+    transition: all 0.2s ease;
+}
+
+/* Estado foco */
+.form-container input:focus,
+.form-container select:focus,
+.form-container textarea:focus {
+    outline: none;
+    border-color: var(--form-input-focus);
+    box-shadow: 0 0 4px rgba(238, 35, 35, 0.6);
+}
+
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1 class="titulo">Tracking RRSS</h1>
+    <div class="actions">
+
+                <button onclick="exportarExcel()">📁 Exportar Excel</button>
+        <button onclick="copiarTablaImagen()">📸 Copiar tabla como imagen</button>
+    </div>
+</header>
+
+<div class="container">
+
+<!-- TABLA -->
+<div class="table-container">
+<table id="tablaTracking">
+<thead>
+<tr>
+    <th>Contacto</th>
+    <th>Red Social / Medio</th>
+    <th>Fecha | Hora</th>
+    <th>Ingreso OM</th>
+    <th>Número</th>
+    <th>Detalles</th>
+    <th>Atiende</th>
+    <th>Comentario auditoría</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<!-- FORMULARIO -->
+<div class="form-container">
+<form id="formTracking">
+
+<label>Red Social / Medio</label>
+<select id="medio" required>
+    <option value="">-- Seleccione --</option>
+    <option>WhatsApp</option>
+    <option>Call Center</option>
+    <option>Alerta grupo RRSS</option>
+    <option>Agencias</option>
+    <option>Messenger</option>
+    <option>Instagram</option>
+    <option>X</option>
+    <option>Sistemas</option>
+</select>
+
+<label>Fecha</label>
+<input type="date" id="fecha" required>
+
+<label>Hora</label>
+<select id="hora" required>
+    <option value="">-- Hora --</option>
+</select>
+
+<label>Minutos</label>
+<select id="minutos" required>
+    <option value="">-- Min --</option>
+</select>
+
+<label>Ingreso a OM</label>
+<select id="ingresoOM" required>
+    <option value="">-- Seleccione --</option>
+    <option>Sí</option>
+    <option>No</option>
+</select>
+
+<label>Número del que escribe</label>
+<input type="text" id="numero" value="N/A" required>
+
+<label>Detalles</label>
+<input type="text" id="detalles" value="N/A" required>
+
+<label>Atiende</label>
+<input type="text" id="atiende" value="N/A" required>
+
+<label>Comentario auditoría</label>
+<textarea id="comentario" required>N/A</textarea>
+
+<button type="submit">Agregar registro</button>
+</form>
+</div>
+
+</div>
+
+<script>
+let registros = [];
+
+// Horas
+for (let h = 0; h < 24; h++) {
+    let o = document.createElement("option");
+    o.value = o.textContent = String(h).padStart(2, "0");
+    hora.appendChild(o);
+}
+
+// Minutos
+for (let m = 0; m < 60; m += 5) {
+    let o = document.createElement("option");
+    o.value = o.textContent = String(m).padStart(2, "0");
+    minutos.appendChild(o);
+}
+
+formTracking.addEventListener("submit", e => {
+    e.preventDefault();
+
+    registros.push({
+        medio: medio.value,
+        fechaHora: `${fecha.value}T${hora.value}:${minutos.value}`,
+        ingresoOM: ingresoOM.value,
+        numero: numero.value,
+        detalles: detalles.value,
+        atiende: atiende.value,
+        comentario: comentario.value
+    });
+
+    render();
+    formTracking.reset();
+    numero.value = detalles.value = atiende.value = comentario.value = "N/A";
+});
+
+function render() {
+    const tbody = document.querySelector("#tablaTracking tbody");
+    tbody.innerHTML = "";
+
+    // Orden ascendente por fecha y hora
+    registros.sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora));
+
+    registros.forEach((r, index) => {
+        let tr = document.createElement("tr");
+
+        let tdContacto = document.createElement("td");
+        tdContacto.textContent = index + 1;
+        tr.appendChild(tdContacto);
+
+        Object.entries(r).forEach(([k, v]) => {
+            let td = document.createElement("td");
+            td.textContent = k === "fechaHora"
+                ? new Date(v).toLocaleString()
+                : v;
+            td.contentEditable = true;
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
+}
+
+function exportarExcel() {
+    if (!registros.length) return alert("Sin datos");
+
+    let csv =
+        "Contacto;Red Social / Medio;Fecha y Hora;Ingreso OM;Número;Detalles;Atiende;Comentario auditoría\n";
+
+    registros.forEach((r, i) => {
+        csv += [
+            i + 1,
+            r.medio,
+            r.fechaHora,
+            r.ingresoOM,
+            r.numero,
+            r.detalles,
+            r.atiende,
+            r.comentario
+        ].join(";") + "\n";
+    });
+
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv]));
+    a.download = "tracking.csv";
+    a.click();
+}
+
+function copiarTablaImagen() {
+    const tabla = document.getElementById("tablaTracking");
+
+    html2canvas(tabla).then(canvas => {
+        canvas.toBlob(blob => {
+            navigator.clipboard.write([
+                new ClipboardItem({ "image/png": blob })
+            ]);
+            alert("✅ Tabla copiada como imagen");
+        });
+    });
+}
+
+function toggleTema() {
+    document.body.classList.toggle("dark");
+}
+</script>
+
+</body>
+</html>
+``
