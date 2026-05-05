@@ -183,6 +183,7 @@ th {
         <!-- NUEVOS BOTONES -->
         <button onclick="guardarRespaldo()">💾 Guardar respaldo</button>
         <button onclick="cargarRespaldo()">📂 Cargar respaldo</button>
+        <button onclick="limpiarTabla()">🗑️ Limpiar tabla</button>
     </div>
 </header>
 
@@ -301,6 +302,15 @@ function render() {
 
     registros.forEach((r, index) => {
         let tr = document.createElement("tr");
+        
+    // ✅ ELIMINAR FILA CON DOBLE CLICK
+    tr.ondblclick = () => {
+        const confirmar = confirm("¿Deseas eliminar esta fila de la tabla?");
+        if (!confirmar) return;
+
+        registros.splice(index, 1);
+        render();
+    };
 
         let tdContacto = document.createElement("td");
         tdContacto.textContent = index + 1;
@@ -343,34 +353,80 @@ function exportarExcel() {
     XLSX.writeFile(wb, "tracking.xlsx");
 }
 
-/* ✅ RESPALDO 30 DÍAS */
 const STORAGE_KEY = "tracking_respaldos";
-const EXP = 30*24*60*60*1000;
+const EXP = 30 * 24 * 60 * 60 * 1000;
 
-function guardarRespaldo(){
-    if(!registros.length) return alert("No hay datos");
+/* ✅ GUARDAR CON NOMBRE */
+function guardarRespaldo() {
+    if (!registros.length) {
+        alert("No hay datos para guardar");
+        return;
+    }
 
-    let r = JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
-    r.push({fecha:Date.now(),data:registros});
+    const nombre = prompt("Ingrese un nombre para el respaldo:");
+    if (!nombre) return alert("Nombre requerido");
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(limpiar(r)));
-    alert("✅ Guardado");
+    let respaldos = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+    respaldos.push({
+        nombre: nombre,
+        fecha: Date.now(),
+        data: registros
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(limpiar(respaldos)));
+
+    alert("✅ Respaldo guardado como: " + nombre);
 }
 
-function cargarRespaldo(){
-    let r = limpiar(JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"));
-    if(!r.length) return alert("No hay respaldo");
+/* ✅ CARGAR CON LISTA */
+function cargarRespaldo() {
+    let respaldos = limpiar(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
 
-    registros = r[r.length-1].data;
+    if (!respaldos.length) {
+        alert("No hay respaldos disponibles");
+        return;
+    }
+
+    let lista = "Seleccione un respaldo escribiendo el número:\n\n";
+
+    respaldos.forEach((r, i) => {
+        const nombre = r.nombre || "Sin nombre"; // ✅ evita undefined
+        const fecha = new Date(r.fecha).toLocaleString();
+
+        lista += `${i + 1}. ${nombre} (${fecha})\n`;
+    });
+
+    lista += "\n👉 Escriba el número y presione Aceptar";
+
+    let seleccion = prompt(lista);
+
+    if (seleccion === null) return;
+
+    let index = parseInt(seleccion.trim()) - 1;
+
+    if (isNaN(index) || index < 0 || index >= respaldos.length) {
+        alert("❌ Entrada inválida. Debe escribir un número de la lista.");
+        return;
+    }
+
+    registros = respaldos[index].data;
     render();
-    alert("✅ Cargado");
+
+    alert("✅ Respaldo cargado correctamente");
 }
 
-function limpiar(r){
+/* ✅ LIMPIEZA AUTOMÁTICA */
+function limpiar(respaldos) {
     const ahora = Date.now();
-    const v = r.filter(x => ahora - x.fecha <= EXP);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
-    return v;
+
+    const validos = respaldos.filter(r =>
+        ahora - r.fecha <= EXP
+    );
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(validos));
+
+    return validos;
 }
 
 /* ORIGINAL */
@@ -383,6 +439,24 @@ function copiarTablaImagen() {
         alert("✅ Tabla copiada como imagen");
     }));
 }
+
+
+function limpiarTabla() {
+    if (!registros.length) {
+        alert("La tabla ya está vacía");
+        return;
+    }
+
+    const confirmacion = confirm("¿Seguro que deseas borrar todos los registros?");
+
+    if (!confirmacion) return;
+
+    registros = [];
+    render();
+
+    alert("✅ Tabla limpiada correctamente");
+}
+
 </script>
 
 </body>
